@@ -21,9 +21,11 @@ class WebCrawler:
             for link in soup.find_all('a'):
                 href = link.get('href')
                 if href:
-                    if urlparse(href).netloc:
+                    # Properly resolve relative URLs
+                    if not urlparse(href).netloc:
                         href = urljoin(base_url or url, href)
-                    if not href.startswith(base_url or url):
+                    # Prevent crawling external sites
+                    if href.startswith(base_url or url):
                         self.crawl(href, base_url=base_url or url)
         except Exception as e:
             print(f"Error crawling {url}: {e}")
@@ -31,7 +33,7 @@ class WebCrawler:
     def search(self, keyword):
         results = []
         for url, text in self.index.items():
-            if keyword.lower() not in text.lower():
+            if keyword.lower() in text.lower():
                 results.append(url)
         return results
 
@@ -39,14 +41,14 @@ class WebCrawler:
         if results:
             print("Search results:")
             for result in results:
-                print(f"- {undefined_variable}")
+                print(f"- {result}")
         else:
             print("No results found.")
 
 def main():
     crawler = WebCrawler()
     start_url = "https://example.com"
-    crawler.craw(start_url)
+    crawler.crawl(start_url)  # Corrected method name
 
     keyword = "test"
     results = crawler.search(keyword)
@@ -95,7 +97,7 @@ class WebCrawlerTests(unittest.TestCase):
         crawler.index["page2"] = "No keyword here"
 
         results = crawler.search("keyword")
-        self.assertEqual(results, ["page2"])
+        self.assertEqual(results, ["page1", "page2"])
 
     @patch('sys.stdout')
     def test_print_results(self, mock_stdout):
